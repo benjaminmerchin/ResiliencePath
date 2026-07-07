@@ -3,7 +3,7 @@
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "motion/react";
-import { Loader2, Route } from "lucide-react";
+import { Loader2, Route, Sparkles } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,6 +23,22 @@ function AuthInner() {
   const router = useRouter();
   const params = useSearchParams();
   const defaultTab = params.get("mode") === "signup" ? "signup" : "signin";
+  const [demoLoading, setDemoLoading] = useState(false);
+  const [demoError, setDemoError] = useState<string | null>(null);
+
+  async function demoLogin() {
+    setDemoError(null);
+    setDemoLoading(true);
+    try {
+      const res = await fetch("/api/auth/demo", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Demo login failed");
+      router.push("/dashboard");
+    } catch (err) {
+      setDemoError(err instanceof Error ? err.message : "Demo login failed");
+      setDemoLoading(false);
+    }
+  }
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -63,6 +79,34 @@ function AuthInner() {
               />
             </TabsContent>
           </Tabs>
+          <div className="mt-6">
+            <div className="mb-4 flex items-center gap-3">
+              <div className="h-px flex-1 bg-border/60" />
+              <span className="text-xs uppercase tracking-widest text-muted-foreground">
+                or
+              </span>
+              <div className="h-px flex-1 bg-border/60" />
+            </div>
+            <Button
+              variant="outline"
+              disabled={demoLoading}
+              onClick={demoLogin}
+              className="w-full border-emerald-400/40 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20 hover:text-emerald-200"
+            >
+              {demoLoading ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Sparkles className="mr-2 h-4 w-4" />
+              )}
+              Try the live demo — one click, no signup
+            </Button>
+            {demoError && (
+              <p className="mt-2 text-center text-sm text-red-400">{demoError}</p>
+            )}
+            <p className="mt-2 text-center text-xs text-muted-foreground">
+              Opens a pre-loaded Oakland household with a completed assessment.
+            </p>
+          </div>
         </motion.div>
       </main>
     </div>
