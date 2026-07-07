@@ -53,3 +53,17 @@ npm run dev
 `.env.local` needs: `NEO4J_URI`, `NEO4J_USERNAME`, `NEO4J_PASSWORD`, `BUTTERBASE_SERVICE_KEY`, `NEXT_PUBLIC_BUTTERBASE_APP_ID`, `ROCKETRIDE_API_KEY`, `DAYTONA_API_KEY`, `COGNEE_API_URL`, `COGNEE_API_KEY`, `COGNEE_TENANT_ID`.
 
 Demo flow: sign up → onboarding (address + household) → dashboard → **Run assessment** → risks, explanation graph, funded upgrade path, sandbox-simulated backup numbers, agent narrative → upgrade to Pro for the grant packet.
+
+## Why this project should win
+
+**Deep integration (the core judging criterion)** — nothing is bolted on:
+- The **Neo4j graph is the product**: risk scores are multiplicative path traversals (exposure × annual probability × cascading `DEPENDS_ON*1..3` disruption × vulnerability severity), upgrades are ranked by risk-reduction-per-effective-dollar after `(:Grant)-[:APPLIES_TO]->(:Upgrade)` matching, and a single-point-of-failure analysis quantifies how many vulnerable residents share each lifeline. Remove Neo4j and there is no product.
+- The **RocketRide Cloud pipeline is the agent**: a deployed 6-node DAG where the CrewAI advisor holds the live Neo4j graph as a NL→Cypher tool. Remove RocketRide and there is no reasoning.
+- **Butterbase plays four roles at once**: Postgres+RLS data, JWT auth, Stripe Connect billing — and its AI gateway serves Claude *to the RocketRide pipeline itself*. The integrations integrate with each other.
+- **Both bonus tracks are real**: Daytona executes an agent-generated 10,000-draw Monte Carlo per assessment (computed numbers, script preserved as provenance); Cognee gives the advisor compounding cross-session memory (add → cognify → GRAPH_COMPLETION recall).
+
+**A demo with stakes** — not a CRUD app: "your father's CPAP depends on a transformer with no redundancy; the battery that fixes it is $0 after SGIP" is a real dependency chain from the graph, with real grant programs and computed backup-hours.
+
+**Complete and live** — deployed frontend, deployed pipeline, seeded cloud graph, one-click demo login, working payments flow, business model (see [BUSINESS.md](BUSINESS.md)). Every number on the dashboard traces to a traversal, a sandboxed computation, or a pipeline run — nothing is hardcoded.
+
+**Good for the world** — it points the most vulnerable households (elderly, medical-device-dependent) to money that already exists for them, before the disaster instead of after.
