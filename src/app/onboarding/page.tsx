@@ -22,6 +22,22 @@ const VULNERABILITY_OPTIONS = [
 
 const CONCERN_OPTIONS = ["Power outages", "Wildfire", "Extreme heat", "Flooding"];
 
+// Addresses with fully modeled risk graphs (hazards, grid infrastructure, grants)
+const MODELED_ADDRESSES = [
+  {
+    address: "2847 38th Ave, Oakland, CA",
+    tag: "Flats · storm outages",
+  },
+  {
+    address: "6120 Skyline Blvd, Oakland, CA",
+    tag: "Hills · wildfire",
+  },
+  {
+    address: "1035 66th Ave, Oakland, CA",
+    tag: "Flood zone",
+  },
+];
+
 const steps = [
   { icon: Home, title: "Where is your home?", blurb: "We build the risk graph for your exact address." },
   { icon: Users, title: "Who lives here?", blurb: "Vulnerabilities change which risks matter most." },
@@ -82,16 +98,48 @@ export default function OnboardingPage() {
 
                   <div className="mt-7">
                     {step === 0 && (
-                      <div className="space-y-2">
-                        <Label htmlFor="address">Street address</Label>
-                        <Input
-                          id="address"
-                          autoFocus
-                          placeholder="2847 38th Ave, Oakland, CA"
-                          value={address}
-                          onChange={(e) => setAddress(e.target.value)}
-                          onKeyDown={(e) => e.key === "Enter" && canNext && setStep(1)}
-                        />
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="address">Street address</Label>
+                          <Input
+                            id="address"
+                            autoFocus
+                            placeholder="Any address — or pick one below"
+                            value={address}
+                            onChange={(e) => setAddress(e.target.value)}
+                            onKeyDown={(e) => e.key === "Enter" && canNext && setStep(1)}
+                          />
+                        </div>
+                        <div>
+                          <p className="mb-2 text-xs uppercase tracking-widest text-muted-foreground">
+                            Fully modeled addresses
+                          </p>
+                          <div className="space-y-2">
+                            {MODELED_ADDRESSES.map((m) => {
+                              const selected = address === m.address;
+                              return (
+                                <button
+                                  key={m.address}
+                                  type="button"
+                                  onClick={() => setAddress(m.address)}
+                                  className={`flex w-full items-center justify-between rounded-lg border p-3 text-left text-sm transition-colors ${
+                                    selected
+                                      ? "border-emerald-400/50 bg-emerald-500/10"
+                                      : "border-border/60 hover:border-emerald-400/30"
+                                  }`}
+                                >
+                                  <span>{m.address}</span>
+                                  <span className="ml-3 shrink-0 rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs text-emerald-300">
+                                    {m.tag}
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                          <p className="mt-2 text-xs text-muted-foreground">
+                            Other addresses are matched to the closest modeled archetype.
+                          </p>
+                        </div>
                       </div>
                     )}
                     {step === 1 && (
