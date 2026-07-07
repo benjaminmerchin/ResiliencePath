@@ -29,7 +29,7 @@ Risk scores multiply exposure × disruption probability × vulnerability severit
 ### 🧈 Butterbase — the entire backend
 - **Database**: `households` + `assessments` tables (Postgres, RLS user isolation)
 - **Auth**: email/password JWT sessions (`/auth/{app}/signup|login|me`)
-- **Payments**: "ResiliencePath Pro" $9/mo via Butterbase billing → Stripe Checkout; grant packet + contractor intros are Pro-gated
+- **Payments**: "ResiliencePath Pro" $9/mo via Butterbase billing — plan created through the billing API, subscribe flow returns Stripe Checkout, grant packet + contractor intros are Pro-gated in the UI. *Note: Stripe Connect's identity verification requires US business details our (France/UAE) team cannot provide, so live charges are pending that verification — the integration itself is complete and exercised up to Stripe's KYC wall.*
 - **AI gateway**: the RocketRide pipeline's LLM node points at `https://api.butterbase.ai/v1` — Butterbase serves the model that powers the RocketRide agent
 
 ### 📦 Daytona (bonus) — computed, not hallucinated

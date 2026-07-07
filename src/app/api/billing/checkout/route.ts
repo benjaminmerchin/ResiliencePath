@@ -16,10 +16,20 @@ export async function POST(req: NextRequest) {
     );
     return NextResponse.json({ url });
   } catch (e) {
+    const msg = e instanceof Error ? e.message : "checkout failed";
+    // Stripe Connect KYC requires US business details; until verification
+    // completes, surface an honest, demo-friendly message instead of a raw
+    // Stripe error.
+    if (/checkout|stripe\.com\/account|onboard/i.test(msg)) {
+      return NextResponse.json(
+        {
+          error:
+            "Checkout is wired end-to-end (plan → subscribe → Stripe Checkout) but Stripe's business verification requires US entity details. It activates the moment verification completes.",
+        },
+        { status: 503 }
+      );
+    }
     const status = e instanceof ButterbaseError ? e.status : 500;
-    return NextResponse.json(
-      { error: e instanceof Error ? e.message : "checkout failed" },
-      { status }
-    );
+    return NextResponse.json({ error: msg }, { status });
   }
 }

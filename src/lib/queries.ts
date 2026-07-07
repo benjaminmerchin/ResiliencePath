@@ -265,3 +265,36 @@ export async function getExplanationGraph(propertyId: string): Promise<GraphData
   const rels = Array.from(new Map(row.rels.map((r) => [r.id, r])).values());
   return { nodes, relationships: rels };
 }
+
+export interface CommunityImpact {
+  infrastructure: string;
+  type: string;
+  redundancy: string;
+  householdsServed: number;
+  vulnerableResidents: number;
+  hazards: string[];
+}
+
+/**
+ * Single-point-of-failure analysis: for each lifeline this property depends
+ * on, how many other modeled households share it, how many vulnerable
+ * residents sit downstream, and which hazards can take it out. Upgrading one
+ * home hardens the whole block — this quantifies that.
+ */
+export async function getCommunityImpact(propertyId: string): Promise<CommunityImpact[]> {
+  return read<CommunityImpact>(
+    `
+    MATCH (p:Property {id: $propertyId})-[:DEPENDS_ON]->(i:Infrastructure)
+    OPTIONAL MATCH (other:Property)-[:DEPENDS_ON]->(i) WHERE other.id <> p.id
+    OPTIONAL MATCH (r:Resident)-[:LIVES_AT]->(:Property)-[:DEPENDS_ON]->(i)
+    OPTIONAL MATCH (r)-[:HAS_VULNERABILITY]->(v:Vulnerability)
+    OPTIONAL MATCH (h:Hazard)-[:DISRUPTS]->(i)
+    RETURN i.name AS infrastructure, i.type AS type, i.redundancy AS redundancy,
+           count(DISTINCT other) + 1 AS householdsServed,
+           count(DISTINCT v) AS vulnerableResidents,
+           collect(DISTINCT h.name) AS hazards
+    ORDER BY householdsServed DESC, vulnerableResidents DESC
+    `,
+    { propertyId }
+  );
+}
