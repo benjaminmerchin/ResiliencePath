@@ -39,8 +39,17 @@ async function req<T>(
   });
   const body = await res.json().catch(() => ({}));
   if (!res.ok) {
-    const msg =
-      body?.error?.message ?? body?.message ?? `Butterbase ${res.status}`;
+    // error shapes vary: {error: "string"}, {error: {message}}, {message},
+    // and zod-style {details: [{message, path}]}
+    const err = body?.error;
+    let msg =
+      (typeof err === "string" ? err : err?.message) ??
+      body?.message ??
+      `Butterbase ${res.status}`;
+    const detail = body?.details?.[0] ?? (typeof err === "object" ? err?.details?.[0] : undefined);
+    if (detail?.message) {
+      msg += `: ${detail.path?.length ? `${detail.path.join(".")} — ` : ""}${detail.message}`;
+    }
     throw new ButterbaseError(msg, res.status, body);
   }
   return body as T;
