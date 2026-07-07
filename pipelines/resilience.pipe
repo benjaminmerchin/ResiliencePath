@@ -1,0 +1,183 @@
+{
+  "components": [
+    {
+      "id": "webhook_1",
+      "provider": "webhook",
+      "name": "Web Hook",
+      "config": {
+        "hideForm": true,
+        "mode": "Source",
+        "parameters": {},
+        "type": "webhook",
+        "name": "Web Hook"
+      },
+      "ui": {
+        "position": {
+          "x": 50,
+          "y": 110
+        },
+        "nodeType": "default",
+        "formDataValid": true
+      }
+    },
+    {
+      "id": "question_1",
+      "provider": "question",
+      "name": "Question",
+      "config": {
+        "type": "question",
+        "name": "Question"
+      },
+      "ui": {
+        "position": {
+          "x": 280,
+          "y": 110
+        },
+        "nodeType": "default",
+        "formDataValid": true
+      },
+      "input": [
+        {
+          "lane": "text",
+          "from": "webhook_1"
+        }
+      ]
+    },
+    {
+      "id": "agent_crewai_1",
+      "provider": "agent_crewai",
+      "name": "Resilience Advisor",
+      "config": {
+        "default": {
+          "advanced_mode": false,
+          "role": "Home Disaster-Resilience Advisor",
+          "goal": "Given a household's address, vulnerabilities, and concerns, assess which hazard will hurt them first and produce the highest-impact, grant-funded upgrade plan by querying the ResiliencePath risk graph in Neo4j.",
+          "backstory": "You are a climate-adaptation analyst who thinks in cascading dependencies. Homes fail through their lifelines: a storm doesn't hurt a CPAP user directly \u2014 it takes down a feeder, which takes down a transformer, which takes down the CPAP. You traverse the risk graph (Properties, Hazards, Infrastructure, Residents, Vulnerabilities, Upgrades, Grants, Contractors) to find what fails first, who is exposed, and which upgrade removes the most risk per dollar after rebates.",
+          "task_description": "",
+          "expected_output": "A markdown assessment with three sections: 1) Top risk \u2014 the highest-impact hazard, naming the exact dependency chain from the graph (resident \u2192 vulnerability \u2192 infrastructure \u2192 hazard). 2) Fastest funded path to clean energy \u2014 ordered upgrades with list cost, grant savings, effective cost, and weeks to installed; state the total grant savings and total timeline. 3) Action plan \u2014 concrete steps: contractor to call, grant to apply for, timing vs hazard season. Under 400 words, specific numbers from the graph.",
+          "instructions": [
+            "Always use the get_data tool to retrieve facts from the risk graph \u2014 never invent infrastructure, grants, or prices.",
+            "Ask the graph for: the property's hazard exposures, the infrastructure it and its residents' vulnerabilities depend on, which hazards disrupt that infrastructure, the upgrades that mitigate those hazards, the grants that apply to each upgrade, and the contractors that install them.",
+            "Weight risk by vulnerability severity: life-safety dependencies (medical devices) dominate.",
+            "Compute effective upgrade cost as list cost minus applicable grant savings, and order the upgrade path by risk reduction per dollar.",
+            "If input includes precomputed risk analysis or a sandbox battery simulation, incorporate those exact numbers.",
+            "Format the final answer as clean markdown. Never mention tools or queries in the answer."
+          ]
+        }
+      },
+      "ui": {
+        "position": {
+          "x": 520,
+          "y": 110
+        },
+        "nodeType": "default",
+        "formDataValid": true
+      },
+      "input": [
+        {
+          "lane": "questions",
+          "from": "question_1"
+        }
+      ]
+    },
+    {
+      "id": "db_neo4j_1",
+      "provider": "db_neo4j",
+      "name": "Risk Graph (Neo4j Aura)",
+      "config": {
+        "profile": "default",
+        "default": {
+          "uri": "${ROCKETRIDE_NEO4J_URI}",
+          "auth_method": "userpass",
+          "user": "${ROCKETRIDE_NEO4J_USER}",
+          "password": "${ROCKETRIDE_NEO4J_PASSWORD}",
+          "database": "neo4j",
+          "db_description": "ResiliencePath home-resilience risk graph. Nodes: Property {id, address, floodZone, roofAge, insulation}, Hazard {id, name, season, annualProbability}, Infrastructure {id, name, type, redundancy}, Resident {id, name, age}, Vulnerability {id, name, severity, kind}, Upgrade {id, name, costUsd, category, leadWeeks}, Grant {id, name, agency, pct, maxUsd, requirement, expires}, Contractor {id, name, rating, phone}. Relationships: (Property)-[:EXPOSED_TO {score}]->(Hazard); (Property|Vulnerability|Infrastructure)-[:DEPENDS_ON {criticality}]->(Infrastructure) \u2014 infrastructure dependencies cascade; (Hazard)-[:DISRUPTS {probability, avgDurationHrs}]->(Infrastructure); (Resident)-[:LIVES_AT]->(Property); (Resident|Property)-[:HAS_VULNERABILITY]->(Vulnerability); (Upgrade)-[:MITIGATES {reduction}]->(Hazard); (Upgrade)-[:BACKS_UP {durationHrs}]->(Infrastructure); (Grant)-[:APPLIES_TO]->(Upgrade); (Contractor)-[:INSTALLS]->(Upgrade). The demo property is id 'prop-1' at 2847 38th Ave, Oakland."
+        }
+      },
+      "ui": {
+        "position": {
+          "x": 520,
+          "y": 320
+        },
+        "nodeType": "default",
+        "formDataValid": true
+      },
+      "control": [
+        {
+          "classType": "tool",
+          "from": "agent_crewai_1"
+        },
+        {
+          "classType": "llm",
+          "from": "llm_openai_api_1"
+        }
+      ]
+    },
+    {
+      "id": "llm_openai_api_1",
+      "provider": "llm_openai_api",
+      "name": "Butterbase AI Gateway",
+      "config": {
+        "profile": "custom",
+        "custom": {
+          "base_url": "https://api.butterbase.ai/v1",
+          "model": "anthropic/claude-sonnet-4.6",
+          "apikey": "${ROCKETRIDE_BUTTERBASE_KEY}",
+          "modelTotalTokens": 128000
+        }
+      },
+      "ui": {
+        "position": {
+          "x": 280,
+          "y": 320
+        },
+        "nodeType": "default",
+        "formDataValid": true
+      },
+      "control": [
+        {
+          "classType": "llm",
+          "from": "agent_crewai_1"
+        },
+        {
+          "classType": "llm",
+          "from": "db_neo4j_1"
+        }
+      ]
+    },
+    {
+      "id": "response_answers_1",
+      "provider": "response_answers",
+      "name": "Return Answers",
+      "config": {
+        "laneName": "answers",
+        "name": "Return Answers"
+      },
+      "ui": {
+        "position": {
+          "x": 760,
+          "y": 110
+        },
+        "nodeType": "default",
+        "formDataValid": true
+      },
+      "input": [
+        {
+          "lane": "answers",
+          "from": "agent_crewai_1"
+        }
+      ]
+    }
+  ],
+  "source": "webhook_1",
+  "project_id": "7e5f3a10-4b2c-4d69-9c1a-2f8e6d40b813",
+  "version": 1,
+  "isLocked": false,
+  "snapToGrid": true,
+  "snapGridSize": [
+    10,
+    10
+  ],
+  "docRevision": 1
+}
