@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { ArchitectureSection } from "@/components/architecture-section";
+import { BusinessCase } from "@/components/business-case";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -175,6 +176,9 @@ export default function LandingPage() {
 
       {/* Architecture / under the hood */}
       <ArchitectureSection />
+
+      {/* Business case */}
+      <BusinessCase />
 
       {/* Pricing */}
       <section className="py-24">

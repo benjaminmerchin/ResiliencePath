@@ -28,6 +28,7 @@ import {
   ZapOff,
 } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
+import { CommunityImpact } from "@/components/community-impact";
 import { RiskGraph, type GraphData } from "@/components/risk-graph";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -368,6 +369,11 @@ function DashboardInner() {
               ))}
             </div>
           </section>
+
+          {/* Community impact — shared lifelines */}
+          <CommunityImpact
+            propertyId={household?.property_id ?? "prop-1"}
+          />
 
           {/* Pro upsell */}
           {!isPro && (
